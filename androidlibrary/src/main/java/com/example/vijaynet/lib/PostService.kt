@@ -1,9 +1,4 @@
-package com.example.vijaynet
-
-import com.example.vijaynet.lib.GET
-import com.example.vijaynet.lib.POSTS
-import com.example.vijaynet.lib.Path
-import com.example.vijaynet.lib.Query
+package com.example.vijaynet.lib
 
 interface PostService {
     @GET("posts/1")

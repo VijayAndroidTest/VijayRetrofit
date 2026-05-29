@@ -1,4 +1,4 @@
-package com.example.vijaynet
+package com.example.vijaynet.lib
 
 data class Post(
     val userId: Int,
