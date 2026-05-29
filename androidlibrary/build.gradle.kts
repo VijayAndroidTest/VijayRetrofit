@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
+    `maven-publish`
 }
 
 android {
@@ -19,6 +20,13 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // 1. CRITICAL ADDITION: Explicitly expose the release AAR component
+    publishing {
+        singleVariant("release") {
+            withSourcesJar() // Optional: includes source code for other developers
+        }
+    }
 }
 
 dependencies {
@@ -30,10 +38,24 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
-// ADD THIS LINE to fix the ComponentActivity / setContent error:
     implementation(libs.androidx.activity.compose)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-// Change "implementation" to "api" for OkHttp
+
     api("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
+}
+
+// 2. This block can now find components["release"] safely!
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+
+                groupId = "com.github.VijayAndroidTest"
+                artifactId = "VijayRetrofit"
+                version = "1.0.0"
+            }
+        }
+    }
 }

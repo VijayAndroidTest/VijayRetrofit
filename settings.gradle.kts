@@ -21,6 +21,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Corrected Kotlin DSL Syntax for JitPack
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
