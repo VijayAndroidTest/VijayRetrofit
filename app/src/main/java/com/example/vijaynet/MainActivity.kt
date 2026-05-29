@@ -1,6 +1,7 @@
 package com.example.retrotest
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,33 +11,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
 import com.example.vijaynet.lib.VijayRetrofit
 import com.example.vijaynet.lib.GsonConverterFactory
-// Assuming you have these annotations in your library
-import com.example.vijaynet.lib.GET
-import com.example.vijaynet.lib.Path
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.vijaynet.lib.Post
+import com.example.vijaynet.lib.PostService
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
-// 1. Data Model
-data class Post(
-    val userId: Int,
-    val id: Int,
-    val title: String,
-    val body: String
-)
-
-// 2. API Service Interface
-interface PostService {
-    @GET("posts/{id}")
-    suspend fun getPostById(@Path("id") postId: Int): Post
-}
-
-// 3. Main Activity
 class MainActivity : ComponentActivity() {
+
+    // 1. Initialize once at the class level
+    private val loggingClient = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .addInterceptor { chain ->
+            val request = chain.request()
+            Log.d("VijayNet", "URL: ${request.url}")
+            chain.proceed(request)
+        }.build()
+
+    private val vijayRetrofit = VijayRetrofit.Builder()
+        .baseUrl("https://jsonplaceholder.typicode.com/")
+        .client(loggingClient)
+        .addConverterFactory(GsonConverterFactory())
+        .build()
+
+    private val postService = vijayRetrofit.create(PostService::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,80 +46,38 @@ class MainActivity : ComponentActivity() {
             var postItem by remember { mutableStateOf<Post?>(null) }
             var errorState by remember { mutableStateOf("") }
             var isLoading by remember { mutableStateOf(true) }
-            var refreshTrigger by remember { mutableStateOf(0) }
+            var refreshTrigger by remember { mutableIntStateOf(0) }
 
+            // 2. The effect now only handles the state orchestration
             LaunchedEffect(refreshTrigger) {
                 isLoading = true
                 errorState = ""
-                postItem = null
 
                 try {
-                    withContext(Dispatchers.IO) {
-                        val loggingClient = OkHttpClient.Builder()
-                            .connectTimeout(5, TimeUnit.SECONDS)
-                            .readTimeout(5, TimeUnit.SECONDS)
-                            .addInterceptor { chain ->
-                                val request = chain.request()
-                                println("VijayNet Requesting: ${request.url}")
-                                chain.proceed(request)
-                            }.build()
-
-                        val vijayRetrofit = VijayRetrofit.Builder()
-                            .baseUrl("https://jsonplaceholder.typicode.com/")
-                            .client(loggingClient)
-                            .addConverterFactory(GsonConverterFactory())
-                            .build()
-
-                        val postService = vijayRetrofit.create(PostService::class.java)
-                        val result = postService.getPostById(5)
-
-                        postItem = result
-                    }
+                    // The library now handles Dispatchers.IO internally
+                    postItem = postService.getPostById(5)
                 } catch (e: Exception) {
-                    errorState = "Connection Blocked: ${e.localizedMessage ?: "Timeout"}"
+                    errorState = "Error: ${e.localizedMessage ?: "Network Error"}"
                 } finally {
                     isLoading = false
                 }
             }
 
             MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-                        Box(
-                            modifier = Modifier
-                                .padding(padding)
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                             if (isLoading) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("Connecting to API...")
-                                }
+                                CircularProgressIndicator()
                             } else if (postItem != null) {
-                                Column(modifier = Modifier.fillMaxWidth()) {
-                                    Text(
-                                        text = "Title: ${postItem?.title}",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Body: ${postItem?.body}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                                Column {
+                                    Text("Title: ${postItem?.title}", style = MaterialTheme.typography.titleMedium)
+                                    Text("Body: ${postItem?.body}", style = MaterialTheme.typography.bodyMedium)
                                 }
-                            } else if (errorState.isNotEmpty()) {
+                            } else {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(text = errorState, color = MaterialTheme.colorScheme.error)
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Button(onClick = { refreshTrigger++ }) {
-                                        Text("Retry")
-                                    }
+                                    Text(errorState, color = MaterialTheme.colorScheme.error)
+                                    Button(onClick = { refreshTrigger++ }) { Text("Retry") }
                                 }
                             }
                         }

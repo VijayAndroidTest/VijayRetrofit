@@ -1,13 +1,10 @@
 package com.example.vijaynet.lib
 
-interface PostService {
+interface JsonPlaceholderApi {
 
     @GET("posts/{id}")
-    suspend fun getPostById(
-
-        @Path("id")
-        id: Int
-
+    suspend fun getPost(
+        @Path("id") id: Int
     ): Post
 
     @GET("posts")
@@ -15,9 +12,6 @@ interface PostService {
 
     @POSTS("posts")
     suspend fun createPost(
-
-        @Body
-        post: Post
-
+        @Body post: Post
     ): Post
 }
