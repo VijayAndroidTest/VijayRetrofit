@@ -1,4 +1,4 @@
-package com.example.vijaynet.exceptions
+package com.example.vijaynet.lib
 
 import java.io.IOException
 

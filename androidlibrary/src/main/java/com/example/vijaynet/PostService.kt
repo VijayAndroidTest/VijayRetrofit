@@ -1,9 +1,9 @@
 package com.example.vijaynet
 
-import com.example.vijaynet.annotations.GET
-import com.example.vijaynet.annotations.POSTS
-import com.example.vijaynet.annotations.Path
-import com.example.vijaynet.annotations.Query
+import com.example.vijaynet.lib.GET
+import com.example.vijaynet.lib.POSTS
+import com.example.vijaynet.lib.Path
+import com.example.vijaynet.lib.Query
 
 interface PostService {
     @GET("posts/1")

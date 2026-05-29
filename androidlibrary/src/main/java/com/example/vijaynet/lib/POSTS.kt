@@ -1,4 +1,4 @@
-package com.example.vijaynet.annotations
+package com.example.vijaynet.lib
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)

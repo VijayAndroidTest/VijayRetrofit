@@ -1,4 +1,4 @@
-package com.example.vijaynet
+package com.example.retrotest
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,13 +10,32 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.vijaynet.converter.GsonConverterFactory
-import com.example.vijaynet.ui.theme.VijayNetTheme // 1. IMPORT YOUR CUSTOM THEME HERE
+
+import com.example.vijaynet.lib.VijayRetrofit
+import com.example.vijaynet.lib.GsonConverterFactory
+// Assuming you have these annotations in your library
+import com.example.vijaynet.lib.GET
+import com.example.vijaynet.lib.Path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
+// 1. Data Model
+data class Post(
+    val userId: Int,
+    val id: Int,
+    val title: String,
+    val body: String
+)
+
+// 2. API Service Interface
+interface PostService {
+    @GET("posts/{id}")
+    suspend fun getPostById(@Path("id") postId: Int): Post
+}
+
+// 3. Main Activity
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,8 +56,8 @@ class MainActivity : ComponentActivity() {
                 try {
                     withContext(Dispatchers.IO) {
                         val loggingClient = OkHttpClient.Builder()
-                            .connectTimeout(3, TimeUnit.SECONDS)
-                            .readTimeout(3, TimeUnit.SECONDS)
+                            .connectTimeout(5, TimeUnit.SECONDS)
+                            .readTimeout(5, TimeUnit.SECONDS)
                             .addInterceptor { chain ->
                                 val request = chain.request()
                                 println("VijayNet Requesting: ${request.url}")
@@ -63,9 +82,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // 2. CHANGE 'MaterialTheme' TO YOUR CUSTOM 'VijayNetTheme'
-            VijayNetTheme {
-                // Surface helps handle background fills cleanly across Edge-To-Edge canvas layouts
+            MaterialTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -78,40 +95,31 @@ class MainActivity : ComponentActivity() {
                                 .padding(16.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (postItem != null) {
+                            if (isLoading) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text("Connecting to API...")
+                                }
+                            } else if (postItem != null) {
                                 Column(modifier = Modifier.fillMaxWidth()) {
                                     Text(
                                         text = "Title: ${postItem?.title}",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onBackground
+                                        style = MaterialTheme.typography.titleMedium
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
                                         text = "Body: ${postItem?.body}",
-                                        color = MaterialTheme.colorScheme.onBackground
+                                        style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
                             } else if (errorState.isNotEmpty()) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = errorState,
-                                        color = MaterialTheme.colorScheme.error,
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
+                                    Text(text = errorState, color = MaterialTheme.colorScheme.error)
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Button(onClick = { refreshTrigger++ }) {
-                                        Text("Retry Connection")
+                                        Text("Retry")
                                     }
-                                }
-                            } else {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = "Connecting via Hotspot...",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
                                 }
                             }
                         }

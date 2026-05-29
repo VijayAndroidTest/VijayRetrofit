@@ -1,4 +1,4 @@
-package com.example.vijaynet.converter
+package com.example.vijaynet.lib
 
 import com.google.gson.Gson
 import java.lang.reflect.Type

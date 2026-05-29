@@ -1,23 +1,17 @@
-package com.example.vijaynet
+package com.example.vijaynet.lib
 
-import com.example.vijaynet.annotations.GET
-import com.example.vijaynet.annotations.POSTS
-import com.example.vijaynet.annotations.Path
-import com.example.vijaynet.annotations.Query
-import com.example.vijaynet.converter.Converter
-import com.example.vijaynet.converter.GsonConverterFactory
-import com.example.vijaynet.exceptions.HttpException
-import com.example.vijaynet.exceptions.NetworkConnectivityException
-import com.example.vijaynet.exceptions.VijayNetException
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.lang.reflect.Proxy
+import java.io.IOException
 import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Proxy
 import java.lang.reflect.Type
+import java.lang.reflect.WildcardType
 import kotlin.coroutines.Continuation
 
 class VijayRetrofit private constructor(
@@ -112,10 +106,10 @@ class VijayRetrofit private constructor(
 
     private fun getSuspendFunctionReturnType(method: Method): Type {
         val lastParameterType = method.genericParameterTypes.lastOrNull()
-        if (lastParameterType is java.lang.reflect.ParameterizedType) {
+        if (lastParameterType is ParameterizedType) {
             val insideType = lastParameterType.actualTypeArguments.firstOrNull()
             if (insideType != null) {
-                if (insideType is java.lang.reflect.WildcardType) {
+                if (insideType is WildcardType) {
                     val lowerBound = insideType.lowerBounds.firstOrNull()
                     if (lowerBound != null) return lowerBound
                     val upperBound = insideType.upperBounds.firstOrNull()
@@ -139,7 +133,7 @@ class VijayRetrofit private constructor(
         val response = try {
             // Intercept raw connection issues (No internet, DNS failures, timeouts)
             okHttpClient.newCall(requestBuilder.build()).execute()
-        } catch (e: java.io.IOException) {
+        } catch (e: IOException) {
             throw NetworkConnectivityException(e)
         }
 

@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
+    // 1. Removed the kotlin.compose plugin since a network engine doesn't need compiler UI transformations
     `maven-publish`
 }
 
@@ -17,35 +17,26 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    buildFeatures {
-        compose = true
-    }
+    // 2. Removed the buildFeatures { compose = true } block entirely
 
-    // 1. CRITICAL ADDITION: Explicitly expose the release AAR component
     publishing {
         singleVariant("release") {
-            withSourcesJar() // Optional: includes source code for other developers
+            withSourcesJar()
         }
     }
 }
 
 dependencies {
+    // 3. Kept only the essential core library dependencies for network operations and asynchronous handling
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.activity.compose)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
+    // Core underlying networking engines remain intact
     api("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.code.gson:gson:2.10.1")
 }
 
-// 2. This block can now find components["release"] safely!
 afterEvaluate {
     publishing {
         publications {

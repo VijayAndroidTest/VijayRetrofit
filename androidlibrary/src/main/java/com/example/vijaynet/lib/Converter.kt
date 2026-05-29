@@ -1,4 +1,4 @@
-package com.example.vijaynet.converter
+package com.example.vijaynet.lib
 
 import java.lang.reflect.Type
 
