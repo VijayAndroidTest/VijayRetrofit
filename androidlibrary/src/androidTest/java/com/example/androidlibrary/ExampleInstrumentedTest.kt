@@ -17,8 +17,12 @@ import org.junit.Assert.*
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        // Context of the app under test.
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.androidlibrary", appContext.packageName)
+        // This is the package of the test APK (the ".test" one)
+        val targetContext = InstrumentationRegistry.getInstrumentation().targetContext
+
+        // This is the package of your actual library/app code
+        val instrumentationContext = InstrumentationRegistry.getInstrumentation().context
+
+        assertEquals("com.example.androidlibrary", instrumentationContext.packageName)
     }
 }
